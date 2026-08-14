@@ -49,7 +49,14 @@ doctor-tracker/
 - Server-side search, filtering, sorting, and pagination
 - Nested list: patients for a specific doctor
 
-The dashboard is not implemented yet.
+**Phase 6 — Frontend authentication & dashboard layout**
+- Admin login connected to `POST /api/auth/login`
+- JWT stored in `localStorage`
+- Protected frontend routes (`/dashboard`, `/doctors`, `/patients`)
+- Main dashboard layout (sidebar, header, responsive)
+- Placeholder dashboard cards (no live analytics yet)
+
+Doctor and patient CRUD screens are not implemented yet.
 
 ## Backend setup
 
@@ -178,6 +185,9 @@ Pagination response:
 
 ## Frontend setup
 
+1. Copy `frontend/.env.example` to `frontend/.env.local`.
+2. Install dependencies and start the app:
+
 ```bash
 cd frontend
 npm install
@@ -185,3 +195,19 @@ npm run dev
 ```
 
 The login page is at `http://localhost:3000/login`.
+
+Required environment variables:
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
+
+### Frontend Authentication & UI
+
+- **Login flow:** `/login` submits email and password to `POST /api/auth/login`. On success, the JWT and user info are saved and the admin is sent to `/dashboard`.
+- **JWT storage:** The token is stored in `localStorage` (`doctor-tracker-token`). User info is stored alongside it for the header. Both are removed on logout.
+- **Protected routes:** `/dashboard`, `/doctors`, and `/patients` check for a token in the browser and redirect to `/login` if it is missing. Visiting `/login` while already authenticated redirects to `/dashboard`. This is UX-only; APIs still require a Bearer token.
+- **Dashboard layout:** Authenticated pages use a sidebar + header shell. Navigation: Dashboard, Doctors, Patients. Doctors and Patients are placeholder pages for now.
+- **Responsive design:** Desktop uses a fixed sidebar. On smaller screens the sidebar becomes a drawer opened from the header menu button.
+- **Main navigation:** Dashboard is the working home view. It shows placeholder stat cards (24 / 156 / 18 / 8) and an "Analytics will appear here" section.
+- **Minimal dependencies:** Login uses `fetch()`, token storage uses `localStorage`, UI state uses React state, and styling uses Tailwind. No extra auth, state, or chart libraries were added.
