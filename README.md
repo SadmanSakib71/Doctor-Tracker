@@ -77,6 +77,11 @@ doctor-tracker/
 - Doctor assignment in the patient form
 - Doctor-specific patient list at `/doctors/[id]/patients`
 
+**Phase 9 — Dashboard & Analytics**
+
+- Live dashboard at `/dashboard` using MongoDB counts and aggregations
+- KPI cards, patients-per-doctor, condition distribution, and 30-day trends
+
 ## Backend setup
 
 1. Copy `backend/.env.example` to `backend/.env` and fill in the values.
@@ -228,8 +233,8 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 - **Protected routes:** `/dashboard`, `/doctors`, and `/patients` check for a token in the browser and redirect to `/login` if it is missing. Visiting `/login` while already authenticated redirects to `/dashboard`. This is UX-only; APIs still require a Bearer token.
 - **Dashboard layout:** Authenticated pages use a sidebar + header shell. Navigation: Dashboard, Doctors, Patients.
 - **Responsive design:** Desktop uses a fixed sidebar. On smaller screens the sidebar becomes a drawer opened from the header menu button.
-- **Main navigation:** Dashboard is the working home view. It shows placeholder stat cards (24 / 156 / 18 / 8) and an "Analytics will appear here" section.
-- **Minimal dependencies:** Login uses `fetch()`, token storage uses `localStorage`, UI state uses React state, and styling uses Tailwind. No extra auth, state, or chart libraries were added.
+- **Main navigation:** Dashboard is the working home view. It shows live KPI cards and charts from `GET /api/dashboard/summary`.
+- **Minimal dependencies:** Login uses `fetch()`, token storage uses `localStorage`, UI state uses React state, and styling uses Tailwind. Charts use Recharts.
 
 ### Doctor Management UI
 
@@ -259,3 +264,47 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 - **Doctor-specific patient view:** `/doctors/[id]/patients` loads `GET /api/doctors/:doctorId/patients`. Add Patient assigns the current doctor and does not allow reassignment on that page. Search, filters, sorting, pagination, edit, and delete are available there as well.
 - **URL state:** Search, filters, pagination, and sort are kept in the query string so refresh and back/forward keep the current view.
 - **Responsive design:** Filters stack on small screens, the add/edit modal works on mobile, and the page avoids horizontal overflow.
+
+## Dashboard API
+
+All dashboard endpoints require `Authorization: Bearer <token>`.
+
+| Method | Path                     | Description                                    |
+| ------ | ------------------------ | ---------------------------------------------- |
+| GET    | `/api/dashboard/summary` | KPI counts and chart aggregations from MongoDB |
+
+Without a JWT the API returns `401`. Database errors are handled by the existing error middleware and do not expose internals.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalDoctors": 25,
+      "totalPatients": 156,
+      "patientsThisMonth": 18,
+      "averagePatientsPerDoctor": 6.24
+    },
+    "patientsPerDoctor": [],
+    "patientsByCondition": [],
+    "patientsOverTime": [],
+    "doctorsOverTime": []
+  }
+}
+```
+
+Statistics are calculated in MongoDB (`countDocuments`, `$lookup`, `$group`, `$sort`, `$limit`, date `$match`). The frontend does not fetch all doctors or patients to compute charts.
+
+## Dashboard & Analytics
+
+- **Live KPIs:** `/dashboard` loads `GET /api/dashboard/summary` and shows Total Doctors, Total Patients, Patients This Month, and Average Patients / Doctor. Values come from MongoDB, not hardcoded placeholders.
+- **MongoDB aggregation:** Patients per doctor uses `$lookup` from doctors to patients (including doctors with zero patients), sorted descending, limited to the top 10. Conditions are grouped with `$group`, sorted, and limited to the top 8. Time series group `createdAt` by UTC day for the last 30 days.
+- **Patients per doctor:** Bar chart of doctor name vs patient count. Long names are truncated on the axis; the tooltip shows the full name.
+- **Patients by condition:** Pie chart of the most common conditions, with a compact legend. Empty data shows “No condition data available”.
+- **Patients over time:** Line chart of patients created in the last 30 days. Missing days are filled with `0` after aggregation so the line is continuous.
+- **Doctors over time:** Line chart of doctors created in the last 30 days, using the same date grouping and missing-day fill.
+- **Responsive charts:** KPI cards are 4 columns on desktop and 1 on mobile. Charts use a 2-column layout on large screens and stack on small screens. Recharts `ResponsiveContainer` prevents horizontal overflow.
+- **Loading, error, empty:** Loading shows skeleton cards instead of `0`. Failures show “Unable to load dashboard data.” with Try Again. A 401 clears auth and redirects to `/login`. An empty database still renders KPIs as `0` and friendly chart empty states.
+- **Refresh:** The Refresh button re-fetches the summary without reloading the browser.

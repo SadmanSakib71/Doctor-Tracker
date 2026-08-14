@@ -16,6 +16,27 @@ export function formatDate(value) {
   });
 }
 
+export function formatChartDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date =
+    typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ? new Date(`${value}T00:00:00.000Z`)
+      : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 export function formatGender(value) {
   if (!value) {
     return "—";
