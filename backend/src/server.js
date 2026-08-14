@@ -8,6 +8,7 @@ async function startServer() {
   try {
     await connectDatabase();
 
+    require("./models/User");
     require("./models/Doctor");
     require("./models/Patient");
 
