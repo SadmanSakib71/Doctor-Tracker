@@ -22,15 +22,18 @@ doctor-tracker/
 ## Current Progress
 
 **Phase 1 — Project setup**
+
 - Frontend and backend apps created
 - Express app, CORS, centralized error handling, and health check (`GET /api/health`)
 - MongoDB Atlas connected with Mongoose
 
 **Phase 2 — Database models**
+
 - `Doctor` and `Patient` models added
 - Patient records are linked to a doctor
 
 **Phase 3 — Authentication**
+
 - Admin user model (`name`, `email`, hashed `password`, `role`)
 - Passwords hashed with bcrypt (never stored as plain text)
 - Admin seed script creates one admin from environment variables
@@ -40,16 +43,19 @@ doctor-tracker/
 - Minimal login page at `/login` (UI only for now)
 
 **Phase 4 — Doctor Management API**
+
 - Authenticated CRUD for doctors
 - Server-side search, filtering, sorting, and pagination
 
 **Phase 5 — Patient Management API**
+
 - Authenticated CRUD for patients
 - Patients belong to a doctor (`doctorId` reference)
 - Server-side search, filtering, sorting, and pagination
 - Nested list: patients for a specific doctor
 
 **Phase 6 — Frontend authentication & dashboard layout**
+
 - Admin login connected to `POST /api/auth/login`
 - JWT stored in `localStorage`
 - Protected frontend routes (`/dashboard`, `/doctors`, `/patients`)
@@ -89,11 +95,11 @@ ADMIN_PASSWORD=
 
 ## Auth endpoints
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | `/api/health` | No | Health check |
-| POST | `/api/auth/login` | No | Login with email and password |
-| GET | `/api/auth/me` | Bearer token | Returns the authenticated user |
+| Method | Path              | Auth         | Description                    |
+| ------ | ----------------- | ------------ | ------------------------------ |
+| GET    | `/api/health`     | No           | Health check                   |
+| POST   | `/api/auth/login` | No           | Login with email and password  |
+| GET    | `/api/auth/me`    | Bearer token | Returns the authenticated user |
 
 Login request body:
 
@@ -108,13 +114,13 @@ Login request body:
 
 All doctor endpoints require `Authorization: Bearer <token>`.
 
-| Method | Path | Description |
-|---|---|---|
-| POST | `/api/doctors` | Create a doctor |
-| GET | `/api/doctors` | List doctors (search, filter, sort, paginate) |
-| GET | `/api/doctors/:id` | Get a single doctor |
-| PUT | `/api/doctors/:id` | Update a doctor |
-| DELETE | `/api/doctors/:id` | Delete a doctor |
+| Method | Path               | Description                                   |
+| ------ | ------------------ | --------------------------------------------- |
+| POST   | `/api/doctors`     | Create a doctor                               |
+| GET    | `/api/doctors`     | List doctors (search, filter, sort, paginate) |
+| GET    | `/api/doctors/:id` | Get a single doctor                           |
+| PUT    | `/api/doctors/:id` | Update a doctor                               |
+| DELETE | `/api/doctors/:id` | Delete a doctor                               |
 
 List query parameters:
 
@@ -146,14 +152,14 @@ All patient endpoints require `Authorization: Bearer <token>`.
 
 A patient belongs to a doctor through `doctorId` (ObjectId reference). Doctor details are not copied into the patient document. List and detail responses populate the doctor's `name`, `specialization`, and `hospital`.
 
-| Method | Path | Description |
-|---|---|---|
-| POST | `/api/patients` | Create a patient under a doctor |
-| GET | `/api/patients` | List patients (search, filter, sort, paginate) |
-| GET | `/api/patients/:id` | Get a single patient |
-| PUT | `/api/patients/:id` | Update a patient |
-| DELETE | `/api/patients/:id` | Delete a patient |
-| GET | `/api/doctors/:doctorId/patients` | List patients for a specific doctor |
+| Method | Path                              | Description                                    |
+| ------ | --------------------------------- | ---------------------------------------------- |
+| POST   | `/api/patients`                   | Create a patient under a doctor                |
+| GET    | `/api/patients`                   | List patients (search, filter, sort, paginate) |
+| GET    | `/api/patients/:id`               | Get a single patient                           |
+| PUT    | `/api/patients/:id`               | Update a patient                               |
+| DELETE | `/api/patients/:id`               | Delete a patient                               |
+| GET    | `/api/doctors/:doctorId/patients` | List patients for a specific doctor            |
 
 Create requires `doctorId`, `name`, `phone`, and `condition`. Optional fields: `email`, `age`, `gender`, `address`. The referenced doctor must already exist.
 
