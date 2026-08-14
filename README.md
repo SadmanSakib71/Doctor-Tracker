@@ -43,7 +43,13 @@ doctor-tracker/
 - Authenticated CRUD for doctors
 - Server-side search, filtering, sorting, and pagination
 
-Patient CRUD and the dashboard are not implemented yet.
+**Phase 5 — Patient Management API**
+- Authenticated CRUD for patients
+- Patients belong to a doctor (`doctorId` reference)
+- Server-side search, filtering, sorting, and pagination
+- Nested list: patients for a specific doctor
+
+The dashboard is not implemented yet.
 
 ## Backend setup
 
@@ -123,6 +129,49 @@ Pagination response:
     "limit": 10,
     "total": 125,
     "totalPages": 13
+  }
+}
+```
+
+## Patient Management API
+
+All patient endpoints require `Authorization: Bearer <token>`.
+
+A patient belongs to a doctor through `doctorId` (ObjectId reference). Doctor details are not copied into the patient document. List and detail responses populate the doctor's `name`, `specialization`, and `hospital`.
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/patients` | Create a patient under a doctor |
+| GET | `/api/patients` | List patients (search, filter, sort, paginate) |
+| GET | `/api/patients/:id` | Get a single patient |
+| PUT | `/api/patients/:id` | Update a patient |
+| DELETE | `/api/patients/:id` | Delete a patient |
+| GET | `/api/doctors/:doctorId/patients` | List patients for a specific doctor |
+
+Create requires `doctorId`, `name`, `phone`, and `condition`. Optional fields: `email`, `age`, `gender`, `address`. The referenced doctor must already exist.
+
+List query parameters:
+
+- `page`, `limit` — pagination (`page` defaults to 1, `limit` defaults to 10, max 100)
+- `search` — case-insensitive match on name, email, phone, or condition
+- `doctorId`, `condition`, `gender` — optional filters
+- `fromDate`, `toDate` — filter by `createdAt` (`YYYY-MM-DD`; `toDate` includes the full day)
+- `sortBy` — `createdAt` (default), `name`, or `age`
+- `sortOrder` — `asc` or `desc` (default)
+
+`GET /api/doctors/:doctorId/patients` supports the same search, filter, sort, and pagination parameters (except `doctorId`, which comes from the path). The doctor must exist.
+
+Pagination response:
+
+```json
+{
+  "success": true,
+  "data": [],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 50,
+    "totalPages": 5
   }
 }
 ```

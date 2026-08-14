@@ -65,10 +65,13 @@ const patientSchema = new mongoose.Schema(
 patientSchema.index({ doctorId: 1, createdAt: -1 });
 
 // Prefix/equality lookups when searching patients by name.
-// This is not a text index; search strategy will be decided later.
+// This is not a text index; list search uses case-insensitive regex.
 patientSchema.index({ name: 1 });
 
 // Filtering patients by medical condition.
 patientSchema.index({ condition: 1 });
+
+// Default patient list is newest-first across all doctors.
+patientSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Patient", patientSchema);
