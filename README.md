@@ -39,7 +39,11 @@ doctor-tracker/
 - Auth middleware verifies `Authorization: Bearer <token>`
 - Minimal login page at `/login` (UI only for now)
 
-Doctor CRUD, Patient CRUD, and the dashboard are not implemented yet.
+**Phase 4 — Doctor Management API**
+- Authenticated CRUD for doctors
+- Server-side search, filtering, sorting, and pagination
+
+Patient CRUD and the dashboard are not implemented yet.
 
 ## Backend setup
 
@@ -84,6 +88,42 @@ Login request body:
 {
   "email": "admin@example.com",
   "password": "your-password"
+}
+```
+
+## Doctor Management API
+
+All doctor endpoints require `Authorization: Bearer <token>`.
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/doctors` | Create a doctor |
+| GET | `/api/doctors` | List doctors (search, filter, sort, paginate) |
+| GET | `/api/doctors/:id` | Get a single doctor |
+| PUT | `/api/doctors/:id` | Update a doctor |
+| DELETE | `/api/doctors/:id` | Delete a doctor |
+
+List query parameters:
+
+- `page`, `limit` — pagination (`page` defaults to 1, `limit` defaults to 10, max 100)
+- `search` — case-insensitive match on name, specialization, or hospital
+- `specialization`, `hospital` — optional filters
+- `fromDate`, `toDate` — filter by `createdAt` (`YYYY-MM-DD`; `toDate` includes the full day)
+- `sortBy` — `createdAt` (default) or `name`
+- `sortOrder` — `asc` or `desc` (default)
+
+Pagination response:
+
+```json
+{
+  "success": true,
+  "data": [],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 125,
+    "totalPages": 13
+  }
 }
 ```
 
