@@ -5,6 +5,8 @@ const variants = {
     "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-indigo-500",
   ghost:
     "text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-indigo-500",
+  danger:
+    "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500",
 };
 
 export default function Button({
@@ -14,12 +16,14 @@ export default function Button({
   disabled = false,
   loading = false,
   className = "",
+  ref,
   ...props
 }) {
   const isDisabled = disabled || loading;
 
   return (
     <button
+      ref={ref}
       type={type}
       disabled={isDisabled}
       aria-busy={loading}

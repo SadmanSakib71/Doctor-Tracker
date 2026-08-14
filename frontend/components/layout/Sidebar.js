@@ -114,7 +114,10 @@ export default function Sidebar({ pathname, open, onClose }) {
         <nav className="flex-1 overflow-y-auto p-3" aria-label="Main">
           <ul className="space-y-1">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive =
+                item.href === "/dashboard"
+                  ? pathname === item.href
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
               const Icon = item.icon;
 
               return (

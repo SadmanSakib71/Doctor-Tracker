@@ -62,7 +62,14 @@ doctor-tracker/
 - Main dashboard layout (sidebar, header, responsive)
 - Placeholder dashboard cards (no live analytics yet)
 
-Doctor and patient CRUD screens are not implemented yet.
+**Phase 7 — Doctor Management UI**
+
+- Doctors page connected to `GET /api/doctors`
+- Search, filters, sorting, and pagination use the backend API
+- Add, edit, and delete doctors from the admin UI
+- View Patients opens a doctor-specific placeholder for Phase 8
+
+Patient CRUD screens are not implemented yet.
 
 ## Backend setup
 
@@ -213,7 +220,21 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 - **Login flow:** `/login` submits email and password to `POST /api/auth/login`. On success, the JWT and user info are saved and the admin is sent to `/dashboard`.
 - **JWT storage:** The token is stored in `localStorage` (`doctor-tracker-token`). User info is stored alongside it for the header. Both are removed on logout.
 - **Protected routes:** `/dashboard`, `/doctors`, and `/patients` check for a token in the browser and redirect to `/login` if it is missing. Visiting `/login` while already authenticated redirects to `/dashboard`. This is UX-only; APIs still require a Bearer token.
-- **Dashboard layout:** Authenticated pages use a sidebar + header shell. Navigation: Dashboard, Doctors, Patients. Doctors and Patients are placeholder pages for now.
+- **Dashboard layout:** Authenticated pages use a sidebar + header shell. Navigation: Dashboard, Doctors, Patients. The Patients page is still a placeholder.
 - **Responsive design:** Desktop uses a fixed sidebar. On smaller screens the sidebar becomes a drawer opened from the header menu button.
 - **Main navigation:** Dashboard is the working home view. It shows placeholder stat cards (24 / 156 / 18 / 8) and an "Analytics will appear here" section.
 - **Minimal dependencies:** Login uses `fetch()`, token storage uses `localStorage`, UI state uses React state, and styling uses Tailwind. No extra auth, state, or chart libraries were added.
+
+### Doctor Management UI
+
+- **Doctor listing:** `/doctors` loads doctors from `GET /api/doctors` with the stored JWT. Desktop shows a table (name, specialization, hospital, phone, email, created date, actions). Mobile uses readable cards instead of a wide table.
+- **Search:** The search box queries the API (`?search=`) across name, specialization, and hospital. Results are fetched from the server after a short debounce, and the page resets to 1.
+- **Filters:** Specialization, hospital, from date, and to date are sent as API query parameters. Apply Filters submits them; Clear removes search and filters.
+- **Pagination:** Server-side only (`page`, `limit=10`). The UI shows Previous / page numbers / Next, disables Previous on the first page and Next on the last page, and displays “Showing 1–10 of 42 doctors”.
+- **Sorting:** Name and created date can be sorted ascending or descending through `sortBy` and `sortOrder`. Sorting is done by the API, not in the browser.
+- **Add doctor:** “Add Doctor” opens a modal. All fields are required. Submit sends `POST /api/doctors`, then closes the modal, shows a success message, and refreshes the list.
+- **Edit doctor:** Edit opens the same modal with current values. Submit sends `PUT /api/doctors/:id` and refreshes the list without a full page reload.
+- **Delete doctor:** Delete asks for confirmation, warns that patients are not deleted, then sends `DELETE /api/doctors/:id`.
+- **View patients:** View Patients goes to `/doctors/[id]/patients`. That page is a placeholder for Phase 8 patient management.
+- **URL state:** Search, filters, pagination, and sort are kept in the query string so refresh and back/forward keep the current view.
+- **Responsive design:** Filters stack on small screens, the add/edit modal works on mobile, and the page avoids horizontal overflow.

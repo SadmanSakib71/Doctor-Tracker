@@ -14,6 +14,14 @@ const pageTitles = {
   "/patients": "Patients",
 };
 
+function getPageTitle(pathname) {
+  if (pathname.startsWith("/doctors")) {
+    return "Doctors";
+  }
+
+  return pageTitles[pathname] || "Doctor Tracker";
+}
+
 export default function DashboardLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -56,7 +64,7 @@ export default function DashboardLayout({ children }) {
   }
 
   const user = getUser();
-  const title = pageTitles[pathname] || "Doctor Tracker";
+  const title = getPageTitle(pathname);
 
   return (
     <div className="min-h-screen bg-slate-50">

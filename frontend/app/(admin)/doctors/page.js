@@ -1,14 +1,27 @@
+import { Suspense } from "react";
+import DoctorsPage from "@/components/doctors/DoctorsPage";
+
 export const metadata = {
   title: "Doctors | Doctor Tracker",
 };
 
-export default function DoctorsPage() {
+function DoctorsPageFallback() {
   return (
-    <section className="mx-auto max-w-6xl rounded-xl border border-slate-200 bg-white p-6">
-      <h2 className="text-lg font-semibold text-slate-900">Doctors</h2>
-      <p className="mt-2 text-sm text-slate-500">
-        Doctor management will be available in a later phase.
-      </p>
-    </section>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div>
+        <div className="h-7 w-32 animate-pulse rounded bg-slate-200" />
+        <div className="mt-2 h-4 w-64 animate-pulse rounded bg-slate-100" />
+      </div>
+      <div className="h-11 w-full animate-pulse rounded-lg bg-slate-200" />
+      <div className="h-48 animate-pulse rounded-xl bg-white" />
+    </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<DoctorsPageFallback />}>
+      <DoctorsPage />
+    </Suspense>
   );
 }
