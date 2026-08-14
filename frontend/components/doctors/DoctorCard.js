@@ -7,6 +7,7 @@ export function DoctorActions({ doctor, busy, onEdit, onDelete }) {
     <div className="flex flex-wrap items-center gap-2">
       <Link
         href={`/doctors/${doctor.id}/patients`}
+        aria-label={`View patients for ${doctor.name}`}
         className="inline-flex items-center rounded-lg px-2.5 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
         View Patients
@@ -16,6 +17,7 @@ export function DoctorActions({ doctor, busy, onEdit, onDelete }) {
         variant="secondary"
         className="px-2.5 py-1.5"
         disabled={busy}
+        aria-label={`Edit ${doctor.name}`}
         onClick={() => onEdit(doctor)}
       >
         Edit
@@ -25,6 +27,7 @@ export function DoctorActions({ doctor, busy, onEdit, onDelete }) {
         variant="ghost"
         className="px-2.5 py-1.5 text-red-700 hover:bg-red-50 hover:text-red-800"
         disabled={busy}
+        aria-label={`Delete ${doctor.name}`}
         onClick={() => onDelete(doctor)}
       >
         Delete

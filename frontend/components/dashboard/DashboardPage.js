@@ -174,7 +174,10 @@ export default function DashboardPage() {
       </div>
 
       {error ? (
-        <section className="rounded-xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
+        <section
+          className="rounded-xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm"
+          role="alert"
+        >
           <p className="text-sm font-medium text-slate-800">{error}</p>
           <p className="mt-1 text-sm text-slate-500">
             Check your connection and try again.

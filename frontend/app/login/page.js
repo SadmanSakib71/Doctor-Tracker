@@ -89,6 +89,7 @@ export default function LoginPage() {
             type="email"
             label="Email"
             autoComplete="email"
+            required
             value={email}
             disabled={submitting}
             onChange={(event) => setEmail(event.target.value)}
@@ -100,6 +101,7 @@ export default function LoginPage() {
             type="password"
             label="Password"
             autoComplete="current-password"
+            required
             value={password}
             disabled={submitting}
             onChange={(event) => setPassword(event.target.value)}

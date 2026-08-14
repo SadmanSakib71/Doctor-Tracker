@@ -37,8 +37,7 @@ const doctorSchema = new mongoose.Schema(
   }
 );
 
-// Prefix/equality lookups when searching doctors by name.
-// This is not a text index; search strategy will be decided later.
+// Name lookups. List search uses case-insensitive regex, not a text index.
 doctorSchema.index({ name: 1 });
 
 // Filtering doctors by specialization.

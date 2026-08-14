@@ -1,15 +1,46 @@
 # Doctor Tracker
 
-A secure administrative web application for managing doctors and their corresponding patients.
+Doctor Tracker is a secure administrative web application for managing doctors and the patients assigned to them. An authenticated admin can search, filter, and update records, then review live dashboard analytics calculated in MongoDB rather than in the browser.
 
-## Technology Stack
+## Features
 
-- **Frontend:** Next.js (App Router), JavaScript, Tailwind CSS
-- **Backend:** Node.js, Express.js, JavaScript
-- **Database:** MongoDB, Mongoose
-- **Authentication:** JWT, bcrypt
-- **Frontend Data Fetching:** TanStack Query
-- **Data Visualization:** Recharts
+- Admin authentication with JWT and bcrypt
+- Protected frontend routes and protected REST APIs
+- Doctor management (create, read, update, delete)
+- Patient management (create, read, update, delete)
+- Doctor → patient relationship (`doctorId` reference)
+- Doctor-specific patient list
+- Search, filtering, pagination, and sorting (server-side)
+- Dashboard KPIs and charts
+- MongoDB aggregation for analytics
+- Loading, empty, and error states
+- Responsive medical admin UI (desktop table, mobile cards)
+
+## Tech Stack
+
+**Frontend**
+
+- Next.js
+- React
+- Tailwind CSS
+- `fetch()` for API requests
+- React state and `localStorage`
+- Recharts
+
+**Backend**
+
+- Node.js
+- Express
+
+**Database**
+
+- MongoDB
+- Mongoose
+
+**Authentication**
+
+- JWT
+- bcrypt
 
 ## Project Structure
 
@@ -19,105 +50,226 @@ doctor-tracker/
 └── backend/      → standalone Node.js + Express application
 ```
 
-## Current Progress
+## Setup Guide
 
-**Phase 1 — Project setup**
+### 1. Clone the repository
 
-- Frontend and backend apps created
-- Express app, CORS, centralized error handling, and health check (`GET /api/health`)
-- MongoDB Atlas connected with Mongoose
+```bash
+git clone <repository-url>
+cd Doctor-Tracker
+```
 
-**Phase 2 — Database models**
+### 2. Install frontend dependencies
 
-- `Doctor` and `Patient` models added
-- Patient records are linked to a doctor
+```bash
+cd frontend
+npm install
+```
 
-**Phase 3 — Authentication**
+### 3. Install backend dependencies
 
-- Admin user model (`name`, `email`, hashed `password`, `role`)
-- Passwords hashed with bcrypt (never stored as plain text)
-- Admin seed script creates one admin from environment variables
-- `POST /api/auth/login` returns a JWT and safe user info
-- `GET /api/auth/me` is a protected test route
-- Auth middleware verifies `Authorization: Bearer <token>`
-- Minimal login page at `/login` (UI only for now)
+```bash
+cd ../backend
+npm install
+```
 
-**Phase 4 — Doctor Management API**
+### 4. Create the backend environment file
 
-- Authenticated CRUD for doctors
-- Server-side search, filtering, sorting, and pagination
-
-**Phase 5 — Patient Management API**
-
-- Authenticated CRUD for patients
-- Patients belong to a doctor (`doctorId` reference)
-- Server-side search, filtering, sorting, and pagination
-- Nested list: patients for a specific doctor
-
-**Phase 6 — Frontend authentication & dashboard layout**
-
-- Admin login connected to `POST /api/auth/login`
-- JWT stored in `localStorage`
-- Protected frontend routes (`/dashboard`, `/doctors`, `/patients`)
-- Main dashboard layout (sidebar, header, responsive)
-- Placeholder dashboard cards (no live analytics yet)
-
-**Phase 7 — Doctor Management UI**
-
-- Doctors page connected to `GET /api/doctors`
-- Search, filters, sorting, and pagination use the backend API
-- Add, edit, and delete doctors from the admin UI
-- View Patients opens a doctor-specific placeholder for Phase 8
-
-**Phase 8 — Patient Management UI**
-
-- Patients page connected to `GET /api/patients`
-- Search, filters, sorting, and pagination use the backend API
-- Add, edit, and delete patients from the admin UI
-- Doctor assignment in the patient form
-- Doctor-specific patient list at `/doctors/[id]/patients`
-
-**Phase 9 — Dashboard & Analytics**
-
-- Live dashboard at `/dashboard` using MongoDB counts and aggregations
-- KPI cards, patients-per-doctor, condition distribution, and 30-day trends
-
-## Backend setup
-
-1. Copy `backend/.env.example` to `backend/.env` and fill in the values.
-2. Install dependencies and start the API:
+Copy `backend/.env.example` to `backend/.env` and fill in real values:
 
 ```bash
 cd backend
-npm install
-npm run dev
+cp .env.example .env
 ```
 
-3. Create the admin user (run once):
+On Windows PowerShell:
+
+```powershell
+cd backend
+Copy-Item .env.example .env
+```
+
+### 5. Create the frontend environment file
+
+Copy `frontend/.env.example` to `frontend/.env.local`:
+
+```bash
+cd frontend
+cp .env.example .env.local
+```
+
+On Windows PowerShell:
+
+```powershell
+cd frontend
+Copy-Item .env.example .env.local
+```
+
+### 6. Start MongoDB / use MongoDB Atlas
+
+Use a local MongoDB instance or a MongoDB Atlas cluster. Put the connection string in `backend/.env` as `MONGODB_URI`.
+
+### 7. Seed the admin user
+
+From the `backend` folder:
 
 ```bash
 npm run seed:admin
 ```
 
-Required environment variables:
+This creates one admin from `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`. If an admin already exists, the script skips creation.
 
-```
-PORT=5000
-MONGODB_URI=
-JWT_SECRET=
-CLIENT_URL=http://localhost:3000
-ADMIN_NAME=
-ADMIN_EMAIL=
-ADMIN_PASSWORD=
+### 8. Start the backend
+
+```bash
+cd backend
+npm run dev
 ```
 
-## Auth endpoints
+The API runs on `http://localhost:5000` by default.
 
-| Method | Path              | Auth         | Description                    |
-| ------ | ----------------- | ------------ | ------------------------------ |
-| GET    | `/api/health`     | No           | Health check                   |
-| POST   | `/api/auth/login` | No           | Login with email and password  |
-| GET    | `/api/auth/me`    | Bearer token | Returns the authenticated user |
+### 9. Start the frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+### 10. Open the application
+
+Open [http://localhost:3000/login](http://localhost:3000/login) and sign in with the seeded admin email and password.
+
+## Environment Variables
+
+### Backend (`backend/.env`)
+
+| Variable         | Purpose                                                            |
+| ---------------- | ------------------------------------------------------------------ |
+| `PORT`           | API port (default `5000`)                                          |
+| `MONGODB_URI`    | MongoDB connection string                                          |
+| `JWT_SECRET`     | Secret used to sign and verify JWTs                                |
+| `CLIENT_URL`     | Frontend origin allowed by CORS (example: `http://localhost:3000`) |
+| `ADMIN_NAME`     | Display name for the seeded admin                                  |
+| `ADMIN_EMAIL`    | Email for the seeded admin                                         |
+| `ADMIN_PASSWORD` | Plain password hashed with bcrypt during seed                      |
+
+### Frontend (`frontend/.env.local`)
+
+| Variable              | Purpose                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL` | Backend API base URL (example: `http://localhost:5000/api`) |
+
+Do not commit `.env` or `.env.local`. Use the `.env.example` files as templates only.
+
+## System Architecture
+
+```
+Browser
+  ↓
+Next.js frontend
+  ↓
+REST API
+  ↓
+Express
+  ↓
+Mongoose
+  ↓
+MongoDB Atlas
+```
+
+### Authentication
+
+```
+Login
+  ↓
+JWT
+  ↓
+Authorization: Bearer <token>
+  ↓
+Express auth middleware
+```
+
+The frontend stores the JWT in `localStorage` and sends it on protected requests. Missing, invalid, or expired tokens return `401`. Protected pages redirect to `/login`.
+
+### Dashboard
+
+```
+Dashboard
+  ↓
+GET /api/dashboard/summary
+  ↓
+MongoDB counts + aggregations
+  ↓
+KPI cards and Recharts
+```
+
+The browser does not download all doctors or patients to compute charts. MongoDB returns only the summary and chart series.
+
+## Technical Decisions
+
+### 1. Doctor → Patient references instead of embedding patients
+
+Each patient stores a `doctorId` that references a Doctor document. Doctor details are populated when patients are listed or fetched.
+
+**Why references**
+
+- A doctor can have many patients. Embedding every patient inside the doctor document would make doctor documents large and slower to update.
+- Patient search, filtering, pagination, and sorting need to run across all patients, not only inside one doctor. A dedicated Patient collection makes those list queries straightforward.
+- The doctor-specific page (`GET /api/doctors/:doctorId/patients`) is a filtered patient query, not a nested rewrite of the data model.
+- Updating a doctor name or hospital does not require rewriting every patient document.
+
+**Trade-off**
+
+- Reading a patient list needs a `populate` (or `$lookup`) to show the doctor name. That extra read is acceptable here because list endpoints already paginate, and the populated doctor fields are small.
+
+Embedding would be simpler for a tiny, never-queried nested list. It would not fit search, filters, pagination, or the dashboard aggregations in this project.
+
+### 2. Dashboard analytics in MongoDB instead of the frontend
+
+`GET /api/dashboard/summary` uses `countDocuments` and aggregation pipelines (`$lookup`, `$group`, `$sort`, `$limit`, date `$match`) and returns only the numbers the UI needs.
+
+**Why aggregation**
+
+- The frontend stays a thin display layer: KPI cards and Recharts receive already-shaped data.
+- The browser never downloads the full doctor or patient collections.
+- Counts, top doctors, condition totals, and 30-day trends stay consistent with the database, including doctors with zero patients.
+
+**Trade-off**
+
+- Aggregation queries are more complex than `find()`. In return, payload size stays small and the UI does not re-implement analytics. Missing days in the 30-day series are filled with `0` in the API so line charts stay continuous without extra frontend math.
+
+## API Documentation
+
+All JSON error responses use:
+
+```json
+{
+  "success": false,
+  "message": "Human-readable error"
+}
+```
+
+### Health
+
+| Method | Path          | Auth | Description  |
+| ------ | ------------- | ---- | ------------ |
+| GET    | `/api/health` | No   | Health check |
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Doctor Tracker API is running"
+}
+```
+
+### Auth
+
+| Method | Path              | Auth         | Description                                |
+| ------ | ----------------- | ------------ | ------------------------------------------ |
+| POST   | `/api/auth/login` | No           | Login with email and password              |
+| GET    | `/api/auth/me`    | Bearer token | Returns the authenticated user id and role |
 
 Login request body:
 
@@ -128,7 +280,9 @@ Login request body:
 }
 ```
 
-## Doctor Management API
+Invalid credentials always return `401` with `"Invalid email or password."` so the API does not reveal whether an email exists.
+
+### Doctors
 
 All doctor endpoints require `Authorization: Bearer <token>`.
 
@@ -164,11 +318,13 @@ Pagination response:
 }
 ```
 
-## Patient Management API
+Deleting a doctor does not delete that doctor's patients.
+
+### Patients
 
 All patient endpoints require `Authorization: Bearer <token>`.
 
-A patient belongs to a doctor through `doctorId` (ObjectId reference). Doctor details are not copied into the patient document. List and detail responses populate the doctor's `name`, `specialization`, and `hospital`.
+A patient belongs to a doctor through `doctorId`. List and detail responses populate the doctor's `name`, `specialization`, and `hospital`.
 
 | Method | Path                              | Description                                    |
 | ------ | --------------------------------- | ---------------------------------------------- |
@@ -190,90 +346,15 @@ List query parameters:
 - `sortBy` — `createdAt` (default), `name`, or `age`
 - `sortOrder` — `asc` or `desc` (default)
 
-`GET /api/doctors/:doctorId/patients` supports the same search, filter, sort, and pagination parameters (except `doctorId`, which comes from the path). The doctor must exist.
+`GET /api/doctors/:doctorId/patients` supports the same search, filter, sort, and pagination parameters (except `doctorId`, which comes from the path).
 
-Pagination response:
-
-```json
-{
-  "success": true,
-  "data": [],
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "total": 50,
-    "totalPages": 5
-  }
-}
-```
-
-## Frontend setup
-
-1. Copy `frontend/.env.example` to `frontend/.env.local`.
-2. Install dependencies and start the app:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The login page is at `http://localhost:3000/login`.
-
-Required environment variables:
-
-```
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-```
-
-### Frontend Authentication & UI
-
-- **Login flow:** `/login` submits email and password to `POST /api/auth/login`. On success, the JWT and user info are saved and the admin is sent to `/dashboard`.
-- **JWT storage:** The token is stored in `localStorage` (`doctor-tracker-token`). User info is stored alongside it for the header. Both are removed on logout.
-- **Protected routes:** `/dashboard`, `/doctors`, and `/patients` check for a token in the browser and redirect to `/login` if it is missing. Visiting `/login` while already authenticated redirects to `/dashboard`. This is UX-only; APIs still require a Bearer token.
-- **Dashboard layout:** Authenticated pages use a sidebar + header shell. Navigation: Dashboard, Doctors, Patients.
-- **Responsive design:** Desktop uses a fixed sidebar. On smaller screens the sidebar becomes a drawer opened from the header menu button.
-- **Main navigation:** Dashboard is the working home view. It shows live KPI cards and charts from `GET /api/dashboard/summary`.
-- **Minimal dependencies:** Login uses `fetch()`, token storage uses `localStorage`, UI state uses React state, and styling uses Tailwind. Charts use Recharts.
-
-### Doctor Management UI
-
-- **Doctor listing:** `/doctors` loads doctors from `GET /api/doctors` with the stored JWT. Desktop shows a table (name, specialization, hospital, phone, email, created date, actions). Mobile uses readable cards instead of a wide table.
-- **Search:** The search box queries the API (`?search=`) across name, specialization, and hospital. Results are fetched from the server after a short debounce, and the page resets to 1.
-- **Filters:** Specialization, hospital, from date, and to date are sent as API query parameters. Apply Filters submits them; Clear removes search and filters.
-- **Pagination:** Server-side only (`page`, `limit=10`). The UI shows Previous / page numbers / Next, disables Previous on the first page and Next on the last page, and displays “Showing 1–10 of 42 doctors”.
-- **Sorting:** Name and created date can be sorted ascending or descending through `sortBy` and `sortOrder`. Sorting is done by the API, not in the browser.
-- **Add doctor:** “Add Doctor” opens a modal. All fields are required. Submit sends `POST /api/doctors`, then closes the modal, shows a success message, and refreshes the list.
-- **Edit doctor:** Edit opens the same modal with current values. Submit sends `PUT /api/doctors/:id` and refreshes the list without a full page reload.
-- **Delete doctor:** Delete asks for confirmation, warns that patients are not deleted, then sends `DELETE /api/doctors/:id`.
-- **View patients:** View Patients goes to `/doctors/[id]/patients`, which lists patients assigned to that doctor.
-- **URL state:** Search, filters, pagination, and sort are kept in the query string so refresh and back/forward keep the current view.
-- **Responsive design:** Filters stack on small screens, the add/edit modal works on mobile, and the page avoids horizontal overflow.
-
-### Patient Management UI
-
-- **Patient listing:** `/patients` loads patients from `GET /api/patients` with the stored JWT. Desktop shows a table (name, age, gender, condition, phone, doctor, created date, actions). Mobile and tablet use readable cards instead of a wide table.
-- **Search:** The search box queries the API (`?search=`) across name, email, phone, and condition. Results are fetched from the server after a 400ms debounce, and the page resets to 1. Pressing Enter applies the search immediately.
-- **Filters:** Doctor, condition, gender, from date, and to date are sent as API query parameters. The doctor dropdown is filled from `GET /api/doctors?limit=100`. Apply Filters submits them; Clear removes search and filters. From date cannot be after to date.
-- **Sorting:** Name, age, and created date can be sorted ascending or descending through `sortBy` and `sortOrder`. Sorting is done by the API, not in the browser.
-- **Pagination:** Server-side only (`page`, `limit=10`). The UI shows Previous / page numbers / Next, disables Previous on the first page and Next on the last page, and displays “Showing 1–10 of 120 patients”.
-- **Add patient:** “Add Patient” opens a modal. Name, phone, condition, and doctor are required. Age, gender, email, and address are optional. Submit sends `POST /api/patients`, then closes the modal, shows a success message, and refreshes the list. If there are no doctors, creating a patient is blocked until a doctor is added.
-- **Edit patient:** Edit opens the same modal with current values. Submit sends `PUT /api/patients/:id` and refreshes the list without a full page reload. The main Patients page allows changing the assigned doctor.
-- **Delete patient:** Delete asks for confirmation, then sends `DELETE /api/patients/:id`.
-- **Doctor assignment:** Each patient belongs to a doctor. The list shows the populated doctor name. The add/edit form uses a doctor dropdown from the existing Doctor API.
-- **Doctor-specific patient view:** `/doctors/[id]/patients` loads `GET /api/doctors/:doctorId/patients`. Add Patient assigns the current doctor and does not allow reassignment on that page. Search, filters, sorting, pagination, edit, and delete are available there as well.
-- **URL state:** Search, filters, pagination, and sort are kept in the query string so refresh and back/forward keep the current view.
-- **Responsive design:** Filters stack on small screens, the add/edit modal works on mobile, and the page avoids horizontal overflow.
-
-## Dashboard API
+### Dashboard
 
 All dashboard endpoints require `Authorization: Bearer <token>`.
 
 | Method | Path                     | Description                                    |
 | ------ | ------------------------ | ---------------------------------------------- |
 | GET    | `/api/dashboard/summary` | KPI counts and chart aggregations from MongoDB |
-
-Without a JWT the API returns `401`. Database errors are handled by the existing error middleware and do not expose internals.
 
 Response:
 
@@ -295,16 +376,12 @@ Response:
 }
 ```
 
-Statistics are calculated in MongoDB (`countDocuments`, `$lookup`, `$group`, `$sort`, `$limit`, date `$match`). The frontend does not fetch all doctors or patients to compute charts.
+## Frontend Notes
 
-## Dashboard & Analytics
-
-- **Live KPIs:** `/dashboard` loads `GET /api/dashboard/summary` and shows Total Doctors, Total Patients, Patients This Month, and Average Patients / Doctor. Values come from MongoDB, not hardcoded placeholders.
-- **MongoDB aggregation:** Patients per doctor uses `$lookup` from doctors to patients (including doctors with zero patients), sorted descending, limited to the top 10. Conditions are grouped with `$group`, sorted, and limited to the top 8. Time series group `createdAt` by UTC day for the last 30 days.
-- **Patients per doctor:** Bar chart of doctor name vs patient count. Long names are truncated on the axis; the tooltip shows the full name.
-- **Patients by condition:** Pie chart of the most common conditions, with a compact legend. Empty data shows “No condition data available”.
-- **Patients over time:** Line chart of patients created in the last 30 days. Missing days are filled with `0` after aggregation so the line is continuous.
-- **Doctors over time:** Line chart of doctors created in the last 30 days, using the same date grouping and missing-day fill.
-- **Responsive charts:** KPI cards are 4 columns on desktop and 1 on mobile. Charts use a 2-column layout on large screens and stack on small screens. Recharts `ResponsiveContainer` prevents horizontal overflow.
-- **Loading, error, empty:** Loading shows skeleton cards instead of `0`. Failures show “Unable to load dashboard data.” with Try Again. A 401 clears auth and redirects to `/login`. An empty database still renders KPIs as `0` and friendly chart empty states.
-- **Refresh:** The Refresh button re-fetches the summary without reloading the browser.
+- **Login:** `/login` submits email and password to `POST /api/auth/login`. On success the JWT and user info are stored and the admin is sent to `/dashboard`.
+- **JWT storage:** `localStorage` key `doctor-tracker-token`. User info is stored alongside it. Both are removed on logout.
+- **Protected routes:** `/dashboard`, `/doctors`, and `/patients` redirect to `/login` if no token is present. Visiting `/login` while authenticated redirects to `/dashboard`. APIs still require a Bearer token.
+- **Layout:** Sidebar + header. Desktop uses a fixed sidebar; smaller screens use a drawer.
+- **Doctors and patients:** Search, filters, sorting, and pagination are query parameters sent to the API. Desktop uses tables; mobile uses cards.
+- **Doctor patients:** `/doctors/[id]/patients` lists patients for one doctor. Add Patient on that page assigns the current doctor.
+- **Dashboard:** Live KPIs and charts from `GET /api/dashboard/summary`. Failures show “Unable to load dashboard data.” A `401` clears auth and redirects to `/login`.

@@ -6,6 +6,10 @@ const connectDatabase = require("./config/database");
 
 async function startServer() {
   try {
+    if (!env.jwtSecret) {
+      throw new Error("JWT_SECRET is not defined. Set it in your environment variables.");
+    }
+
     await connectDatabase();
 
     require("./models/User");
