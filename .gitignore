@@ -1,0 +1,25 @@
+# dependencies
+node_modules
+
+# environment
+.env
+.env.*
+!.env.example
+
+# next.js
+.next
+out
+
+# production
+build
+
+# logs
+npm-debug.log*
+
+# misc
+.DS_Store
+*.pem
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+coverage
