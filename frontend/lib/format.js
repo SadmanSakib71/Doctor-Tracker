@@ -15,3 +15,23 @@ export function formatDate(value) {
     day: "numeric",
   });
 }
+
+export function formatGender(value) {
+  if (!value) {
+    return "—";
+  }
+
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+export function formatAge(value) {
+  if (value === 0) {
+    return "0";
+  }
+
+  if (value == null || value === "") {
+    return "—";
+  }
+
+  return String(value);
+}

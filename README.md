@@ -69,7 +69,13 @@ doctor-tracker/
 - Add, edit, and delete doctors from the admin UI
 - View Patients opens a doctor-specific placeholder for Phase 8
 
-Patient CRUD screens are not implemented yet.
+**Phase 8 — Patient Management UI**
+
+- Patients page connected to `GET /api/patients`
+- Search, filters, sorting, and pagination use the backend API
+- Add, edit, and delete patients from the admin UI
+- Doctor assignment in the patient form
+- Doctor-specific patient list at `/doctors/[id]/patients`
 
 ## Backend setup
 
@@ -220,7 +226,7 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 - **Login flow:** `/login` submits email and password to `POST /api/auth/login`. On success, the JWT and user info are saved and the admin is sent to `/dashboard`.
 - **JWT storage:** The token is stored in `localStorage` (`doctor-tracker-token`). User info is stored alongside it for the header. Both are removed on logout.
 - **Protected routes:** `/dashboard`, `/doctors`, and `/patients` check for a token in the browser and redirect to `/login` if it is missing. Visiting `/login` while already authenticated redirects to `/dashboard`. This is UX-only; APIs still require a Bearer token.
-- **Dashboard layout:** Authenticated pages use a sidebar + header shell. Navigation: Dashboard, Doctors, Patients. The Patients page is still a placeholder.
+- **Dashboard layout:** Authenticated pages use a sidebar + header shell. Navigation: Dashboard, Doctors, Patients.
 - **Responsive design:** Desktop uses a fixed sidebar. On smaller screens the sidebar becomes a drawer opened from the header menu button.
 - **Main navigation:** Dashboard is the working home view. It shows placeholder stat cards (24 / 156 / 18 / 8) and an "Analytics will appear here" section.
 - **Minimal dependencies:** Login uses `fetch()`, token storage uses `localStorage`, UI state uses React state, and styling uses Tailwind. No extra auth, state, or chart libraries were added.
@@ -235,6 +241,21 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 - **Add doctor:** “Add Doctor” opens a modal. All fields are required. Submit sends `POST /api/doctors`, then closes the modal, shows a success message, and refreshes the list.
 - **Edit doctor:** Edit opens the same modal with current values. Submit sends `PUT /api/doctors/:id` and refreshes the list without a full page reload.
 - **Delete doctor:** Delete asks for confirmation, warns that patients are not deleted, then sends `DELETE /api/doctors/:id`.
-- **View patients:** View Patients goes to `/doctors/[id]/patients`. That page is a placeholder for Phase 8 patient management.
+- **View patients:** View Patients goes to `/doctors/[id]/patients`, which lists patients assigned to that doctor.
+- **URL state:** Search, filters, pagination, and sort are kept in the query string so refresh and back/forward keep the current view.
+- **Responsive design:** Filters stack on small screens, the add/edit modal works on mobile, and the page avoids horizontal overflow.
+
+### Patient Management UI
+
+- **Patient listing:** `/patients` loads patients from `GET /api/patients` with the stored JWT. Desktop shows a table (name, age, gender, condition, phone, doctor, created date, actions). Mobile and tablet use readable cards instead of a wide table.
+- **Search:** The search box queries the API (`?search=`) across name, email, phone, and condition. Results are fetched from the server after a 400ms debounce, and the page resets to 1. Pressing Enter applies the search immediately.
+- **Filters:** Doctor, condition, gender, from date, and to date are sent as API query parameters. The doctor dropdown is filled from `GET /api/doctors?limit=100`. Apply Filters submits them; Clear removes search and filters. From date cannot be after to date.
+- **Sorting:** Name, age, and created date can be sorted ascending or descending through `sortBy` and `sortOrder`. Sorting is done by the API, not in the browser.
+- **Pagination:** Server-side only (`page`, `limit=10`). The UI shows Previous / page numbers / Next, disables Previous on the first page and Next on the last page, and displays “Showing 1–10 of 120 patients”.
+- **Add patient:** “Add Patient” opens a modal. Name, phone, condition, and doctor are required. Age, gender, email, and address are optional. Submit sends `POST /api/patients`, then closes the modal, shows a success message, and refreshes the list. If there are no doctors, creating a patient is blocked until a doctor is added.
+- **Edit patient:** Edit opens the same modal with current values. Submit sends `PUT /api/patients/:id` and refreshes the list without a full page reload. The main Patients page allows changing the assigned doctor.
+- **Delete patient:** Delete asks for confirmation, then sends `DELETE /api/patients/:id`.
+- **Doctor assignment:** Each patient belongs to a doctor. The list shows the populated doctor name. The add/edit form uses a doctor dropdown from the existing Doctor API.
+- **Doctor-specific patient view:** `/doctors/[id]/patients` loads `GET /api/doctors/:doctorId/patients`. Add Patient assigns the current doctor and does not allow reassignment on that page. Search, filters, sorting, pagination, edit, and delete are available there as well.
 - **URL state:** Search, filters, pagination, and sort are kept in the query string so refresh and back/forward keep the current view.
 - **Responsive design:** Filters stack on small screens, the add/edit modal works on mobile, and the page avoids horizontal overflow.
