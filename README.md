@@ -2,28 +2,105 @@
 
 ## Description
 
-Doctor Tracker is a secure medical administration portal for managing doctors, the patients assigned to them, and live clinic analytics. An authenticated admin can search, filter, sort, and paginate records, then review KPI cards and charts that MongoDB computes on the server instead of in the browser.
+Doctor Tracker is a medical administration portal for managing doctors, assigned patients, and clinic analytics. An authenticated admin can create and maintain records, search and filter lists on the server, and review KPI cards and charts built from MongoDB aggregations.
 
-## Setup Guide
+## Features
 
-The app is two packages: a Next.js frontend and a standalone Express API. Each has its own `.env.example` file.
+- **Admin authentication** — JWT login with a seeded admin account
+- **Doctor management** — create, view, update, and delete doctors
+- **Patient management** — create, view, update, and delete patients
+- **Search** — case-insensitive search on doctor and patient lists
+- **Filtering** — specialization, hospital, condition, gender, doctor, and date range
+- **Sorting** — name, created date, and (for patients) age
+- **Pagination** — server-side pages with a default limit of 10
+- **Doctor-specific patient management** — view and manage patients for one doctor
+- **Dashboard analytics** — totals, patients this month, and average patients per doctor
+- **Data visualization** — Recharts charts for patients per doctor, conditions, and 30-day trends
+- **Responsive UI** — desktop sidebar and tables; mobile drawer and cards
+
+## Tech Stack
+
+### Frontend
+
+- Next.js
+- React
+- Tailwind CSS
+- Recharts
+- JavaScript
+
+### Backend
+
+- Node.js
+- Express
+- Mongoose
+- JWT (`jsonwebtoken`)
+- bcrypt
+
+### Database
+
+- MongoDB Atlas (connection string via `MONGODB_URI`; a local MongoDB instance also works)
+
+## Project Structure
+
+```
+Doctor-Tracker/
+├── frontend/
+│   ├── app/                 # Next.js App Router pages and layouts
+│   ├── components/          # Dashboard, doctors, patients, layout, shared UI
+│   ├── hooks/
+│   ├── lib/                 # Auth helpers and API client
+│   ├── services/            # Auth, doctor, patient, and dashboard API calls
+│   ├── package.json
+│   └── .env.example
+│
+├── backend/
+│   ├── src/
+│   │   ├── config/          # Env and MongoDB connection
+│   │   ├── controllers/
+│   │   ├── middleware/      # JWT auth, 404, error handler
+│   │   ├── models/          # User, Doctor, Patient
+│   │   ├── routes/
+│   │   ├── scripts/         # Admin seed
+│   │   ├── utils/           # JWT helpers and ApiError
+│   │   ├── app.js
+│   │   └── server.js
+│   ├── package.json
+│   └── .env.example
+│
+├── docs/
+│   └── screenshots/
+│
+└── README.md
+```
+
+## System Architecture
+
+```
+Browser → Next.js frontend → REST API → Express backend → MongoDB
+```
+
+The frontend never talks to MongoDB. Protected pages call JSON endpoints with a Bearer token. Express verifies the JWT, Mongoose reads or writes documents, and dashboard aggregations run in MongoDB before results reach the browser.
+
+**Auth flow:** the admin posts email and password to `POST /api/auth/login`. The API finds the user, compares the password with bcrypt, and returns a JWT (7-day expiry) plus a small user object. The frontend stores both in `localStorage` (`doctor-tracker-token` and `doctor-tracker-user`) and sends `Authorization: Bearer <token>` on later requests. Invalid or expired tokens return `401`; the UI clears auth and redirects to `/login`.
+
+**List flow:** search, filters, sort, and page live in the URL (for example `/doctors?search=...&page=2`). The page sends those query params to the API. The browser does not download the full collection and filter it locally.
+
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - npm
-- MongoDB locally, or a MongoDB Atlas cluster
+- A MongoDB Atlas cluster (or a local MongoDB instance)
 
-### 1. Clone the repository
+### Clone Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/SadmanSakib71/Doctor-Tracker.git
 cd Doctor-Tracker
 ```
 
-### 2. Backend environment
-
-Copy the backend example file and fill in real values:
+### Backend Setup
 
 ```bash
 cd backend
@@ -39,7 +116,7 @@ Copy-Item .env.example .env
 npm install
 ```
 
-`backend/.env.example`:
+Fill in `backend/.env` (never commit this file):
 
 ```
 PORT=5000
@@ -51,17 +128,35 @@ ADMIN_EMAIL=
 ADMIN_PASSWORD=
 ```
 
-| Variable         | Purpose                                                            |
-| ---------------- | ------------------------------------------------------------------ |
-| `PORT`           | API port (default `5000`)                                          |
-| `MONGODB_URI`    | MongoDB connection string                                          |
-| `JWT_SECRET`     | Secret used to sign and verify JWTs                                |
-| `CLIENT_URL`     | Frontend origin allowed by CORS (example: `http://localhost:3000`) |
-| `ADMIN_NAME`     | Display name for the seeded admin                                  |
-| `ADMIN_EMAIL`    | Email for the seeded admin                                         |
-| `ADMIN_PASSWORD` | Plain password hashed with bcrypt during seed                      |
+| Variable         | Purpose                                       |
+| ---------------- | --------------------------------------------- |
+| `PORT`           | API port (default `5000`)                     |
+| `MONGODB_URI`    | MongoDB connection string                     |
+| `JWT_SECRET`     | Secret used to sign and verify JWTs           |
+| `CLIENT_URL`     | Frontend origin allowed by CORS               |
+| `ADMIN_NAME`     | Display name for the seeded admin             |
+| `ADMIN_EMAIL`    | Email for the seeded admin                    |
+| `ADMIN_PASSWORD` | Plain password hashed with bcrypt during seed |
 
-### 3. Frontend environment
+Then start the API:
+
+```bash
+npm run dev
+```
+
+The API listens on `http://localhost:5000` by default. Use `npm start` for a non-watch process.
+
+### Admin Seed
+
+From `backend`, after `.env` is filled in:
+
+```bash
+npm run seed:admin
+```
+
+This creates one admin from `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`. If an admin already exists, the script skips creation.
+
+### Frontend Setup
 
 ```bash
 cd frontend
@@ -83,168 +178,237 @@ npm install
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
 
-| Variable              | Purpose                                                     |
-| --------------------- | ----------------------------------------------------------- |
-| `NEXT_PUBLIC_API_URL` | Backend API base URL (example: `http://localhost:5000/api`) |
+| Variable              | Purpose              |
+| --------------------- | -------------------- |
+| `NEXT_PUBLIC_API_URL` | Backend API base URL |
 
-Do not commit `.env` or `.env.local`. Use the `.env.example` files as templates only.
-
-### 4. Seed the admin user
-
-From `backend`:
+Do not commit `.env` or `.env.local`. Then start the frontend:
 
 ```bash
-npm run seed:admin
-```
-
-This creates one admin from `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`. If an admin already exists, the script skips creation.
-
-### 5. Start the API
-
-```bash
-cd backend
 npm run dev
 ```
 
-The API listens on `http://localhost:5000` by default.
+Open [http://localhost:3000/login](http://localhost:3000/login) and sign in with the seeded admin email and password. `/` redirects to `/dashboard` or `/login` based on auth.
 
-### 6. Start the frontend
+## Authentication
 
-In a second terminal:
+Authentication is **token-based**, not cookie-based.
 
-```bash
-cd frontend
-npm run dev
-```
+1. Admin submits email and password on `/login`.
+2. Frontend calls `POST /api/auth/login`.
+3. Backend looks up the user and runs `bcrypt.compare`. Failed lookups and wrong passwords both return `401` with `"Invalid email or password"`.
+4. On success, the API returns a JWT and `{ id, name, email, role }`.
+5. Frontend stores the token and user in `localStorage`.
+6. Protected API routes require `Authorization: Bearer <token>`.
+7. The admin layout checks `isAuthenticated()` after mount and redirects unauthenticated users to `/login`. Visiting `/login` while authenticated redirects to `/dashboard`.
 
-Open [http://localhost:3000/login](http://localhost:3000/login) and sign in with the seeded admin email and password.
+`GET /api/auth/me` returns the authenticated user id and role.
 
-## System Architecture
+## Doctor Management
 
-The frontend is a thin UI. It never talks to MongoDB. Protected pages call REST endpoints; Express authenticates the JWT, Mongoose reads or writes documents, and MongoDB aggregations shape dashboard data before it reaches the browser.
+Admins can create, view, edit, and delete doctors (`name`, `specialization`, `hospital`, `phone`, `email`). Lists support search, filtering, sorting, and pagination. From a doctor, admins can open that doctor's patients at `/doctors/:id/patients`. Deleting a doctor does **not** delete that doctor's patients.
 
-```mermaid
-flowchart LR
-  Browser["Browser (Next.js)"]
-  API["Express REST API"]
-  Auth["JWT middleware"]
-  DB["MongoDB"]
+| Method | Endpoint                          | Description                                   |
+| ------ | --------------------------------- | --------------------------------------------- |
+| POST   | `/api/doctors`                    | Create a doctor                               |
+| GET    | `/api/doctors`                    | List doctors (search, filter, sort, paginate) |
+| GET    | `/api/doctors/:id`                | Get a single doctor                           |
+| PUT    | `/api/doctors/:id`                | Update a doctor                               |
+| DELETE | `/api/doctors/:id`                | Delete a doctor                               |
+| GET    | `/api/doctors/:doctorId/patients` | List patients for a specific doctor           |
 
-  Browser -->|"JSON + Bearer token"| API
-  API --> Auth
-  Auth --> DB
-  DB -->|"documents / aggregations"| API
-  API -->|"JSON"| Browser
-```
+All doctor endpoints require a Bearer token.
 
-```
-doctor-tracker/
-├── frontend/     Next.js + React + Tailwind CSS
-└── backend/      Node.js + Express + Mongoose
-```
+**List query parameters:** `page`, `limit` (default 10, max 100), `search` (name, specialization, hospital), `specialization`, `hospital`, `fromDate`, `toDate` (`YYYY-MM-DD`), `sortBy` (`createdAt` or `name`), `sortOrder` (`asc` or `desc`).
 
-### Data model
+## Patient Management
 
-- **User** — admin account (email + bcrypt password). Only role is `admin`.
-- **Doctor** — name, specialization, hospital, phone, email.
-- **Patient** — belongs to a doctor through `doctorId` (ObjectId reference). Stores contact details and `condition`.
+Each patient belongs to a doctor through `doctorId` (ObjectId reference). A doctor can have many patients. Patient responses populate the doctor's name, specialization, and hospital.
 
-A doctor can have many patients. Patient lists populate the doctor's name, specialization, and hospital. Deleting a doctor does not cascade-delete patients.
+Required on create: `doctorId`, `name`, `phone`, `condition`. Optional: `email`, `age`, `gender` (`male`, `female`, `other`), `address`.
 
-### Authentication flow
+| Method | Endpoint            | Description                                    |
+| ------ | ------------------- | ---------------------------------------------- |
+| POST   | `/api/patients`     | Create a patient under a doctor                |
+| GET    | `/api/patients`     | List patients (search, filter, sort, paginate) |
+| GET    | `/api/patients/:id` | Get a single patient                           |
+| PUT    | `/api/patients/:id` | Update a patient                               |
+| DELETE | `/api/patients/:id` | Delete a patient                               |
 
-```mermaid
-sequenceDiagram
-  participant Admin
-  participant Next as Next.js
-  participant API as Express
-  participant DB as MongoDB
+All patient endpoints require a Bearer token.
 
-  Admin->>Next: POST email + password
-  Next->>API: POST /api/auth/login
-  API->>DB: Find user, bcrypt.compare
-  API-->>Next: JWT + user
-  Next->>Next: localStorage token
-  Admin->>Next: Open /dashboard
-  Next->>API: GET /api/dashboard/summary<br/>Authorization: Bearer token
-  API->>API: Verify JWT
-  API->>DB: counts + aggregations
-  API-->>Next: KPI + chart series
-```
+**List query parameters:** `page`, `limit`, `search` (name, email, phone, condition), `doctorId`, `condition`, `gender`, `fromDate`, `toDate`, `sortBy` (`createdAt`, `name`, or `age`), `sortOrder` (`asc` or `desc`).
 
-Missing, invalid, or expired tokens return `401`. The frontend clears auth and redirects to `/login`. Visiting `/login` while authenticated redirects to `/dashboard`.
+The doctor-specific list uses the same query options, scoped to that doctor.
 
-### Request path for lists
+## Dashboard & Analytics
 
-Search, filters, sort, and pagination live in the URL (`/doctors?search=...&page=2`). The page reads those query params, sends them to the API, and renders either a desktop table or mobile cards. The browser does not filter a full in-memory list.
+`GET /api/dashboard/summary` returns the numbers the UI needs. Counts and chart series are calculated with MongoDB `countDocuments` and aggregation pipelines (`$lookup`, `$group`, `$sort`, `$limit`, date `$match`). Recharts renders the series. The client does not download every doctor or patient to compute charts.
 
-### Dashboard path
+**KPI cards**
 
-`GET /api/dashboard/summary` returns only the numbers the UI needs: totals, patients this month, average patients per doctor, top doctors, condition breakdown, and 30-day trends. Recharts draws the series. The client never downloads every doctor or patient to compute charts.
+- Total doctors
+- Total patients
+- Patients this month
+- Average patients per doctor
+
+**Charts (last 30 days where applicable)**
+
+- Patients per doctor (top 10, including doctors with zero patients)
+- Patients by condition (top 8)
+- Patients over time
+- Doctors over time
+
+Missing days in the 30-day series are filled with `0` in the API so line charts stay continuous.
+
+## Performance & Optimization
+
+- **MongoDB indexes** on doctor `name`, `specialization`, `hospital`, and `createdAt`; patient `doctorId + createdAt`, `name`, `condition`, and `createdAt`
+- **Server-side pagination** with `skip` / `limit` and `countDocuments`
+- **Server-side search and filtering** via query params (regex search is escaped)
+- **MongoDB aggregation** for dashboard summary and charts
+- **`.lean()`** on list and get-by-id reads
+- **Debounced frontend search** (400ms) before updating the URL and refetching
+- **No global client store** — each page keeps local React state; list query lives in the URL
 
 ## Technical Decisions
 
-### 1. Local React state instead of Redux or Context API
+### 1. Dashboard analytics in MongoDB, not the browser
 
-This app does **not** use Redux or the React Context API.
+The summary endpoint shapes KPI and chart data with aggregations and returns only what Recharts needs. That keeps payload size small, includes doctors with zero patients, and avoids re-implementing analytics in the UI. Aggregation is more complex than `find()`, but the frontend stays a display layer.
 
-Each screen owns a small, short-lived piece of state: the doctors page keeps the current list, pagination, and modal flags; the patients page does the same; the dashboard keeps one summary payload. Those values are not shared across routes. When the admin leaves `/doctors` for `/patients`, the doctors list does not need to survive.
+### 2. Fetch and React state instead of Redux, Zustand, or TanStack Query
 
-**Why not Redux**
+There is no shared client cache. Doctor, patient, and dashboard screens each own short-lived `useState` / `useEffect` for that page. Search, filters, sort, and page are already in the URL, so a refresh restores the same query. Service modules (`doctorService`, `patientService`, `dashboardService`) wrap `fetch`. Adding a global store would add moving parts without removing a real problem at this size.
 
-Redux (or Redux Toolkit) is a good fit when many distant components read and write the same store: a cart, a complex editor, or a shared cache. Here there is no shared client cache. List state is already represented in the URL, and each page refetches on mount. A store, slices, action types, and a `Provider` would add moving parts without removing a real problem.
+## Security
 
-**Why not Context**
+- JWT authentication (`Authorization: Bearer <token>`)
+- bcrypt password hashing (salt rounds 10 at seed)
+- Protected API routes for doctors, patients, dashboard, and `/api/auth/me`
+- Protected frontend admin layout (redirects to `/login` without a token)
+- Secrets kept in environment variables (`.env` / `.env.local` are gitignored)
+- Generic login errors so the API does not reveal whether an email exists
+- Request validation (required fields, ObjectIds, dates, enums) and Mongoose schema checks
+- CORS limited to `CLIENT_URL`
+- Passwords are `select: false` on the User model
 
-Context is lighter than Redux, but it still needs a provider at the root and it re-renders every consumer when the value changes. The only values that look “global” are the JWT and the current user. Those live in `localStorage` behind `frontend/lib/auth.js`. Layouts call `isAuthenticated()` / `getUser()` after mount. There is no theme, no locale, and no cross-page form draft that would justify a context.
+## Responsive Design
 
-**What we use instead**
+From the `lg` breakpoint up, the app uses a fixed sidebar, data tables, a four-column KPI row at `xl`, and a two-column chart grid. Below `lg`, the sidebar becomes a drawer, doctor and patient lists render as cards, KPI cards stack, and charts use a single column.
 
-- **URL search params** as the source of truth for search, filters, sort, and page number. Refreshing the browser restores the same list query.
-- **`useState` / `useEffect`** for fetch status, form fields, and dialogs on that page.
-- **Service modules** (`doctorService`, `patientService`, `dashboardService`) so components call named API functions instead of inlining `fetch`.
-- **`localStorage`** for the JWT (`doctor-tracker-token`) and a small user object.
+## API Overview
 
-**Trade-off**
+JSON errors use `{ "success": false, "message": "..." }`.
 
-Each page repeats a similar load / error / `401` redirect pattern. That duplication is cheaper than a global store at this size. If a future feature needed a live shared notification bus or a multi-page wizard, Context (narrow, for that feature) would be the next step — not a Redux rewrite of the whole tree.
+### Authentication
 
-### 2. Dashboard analytics in MongoDB instead of the frontend
+| Method | Endpoint          | Auth         | Description                    |
+| ------ | ----------------- | ------------ | ------------------------------ |
+| POST   | `/api/auth/login` | No           | Login with email and password  |
+| GET    | `/api/auth/me`    | Bearer token | Authenticated user id and role |
 
-`GET /api/dashboard/summary` uses `countDocuments` and aggregation pipelines (`$lookup`, `$group`, `$sort`, `$limit`, date `$match`) and returns only the payload Recharts needs.
+### Doctors
 
-**Why aggregation**
+| Method | Endpoint                          | Auth         | Description             |
+| ------ | --------------------------------- | ------------ | ----------------------- |
+| POST   | `/api/doctors`                    | Bearer token | Create a doctor         |
+| GET    | `/api/doctors`                    | Bearer token | List doctors            |
+| GET    | `/api/doctors/:id`                | Bearer token | Get a doctor            |
+| PUT    | `/api/doctors/:id`                | Bearer token | Update a doctor         |
+| DELETE | `/api/doctors/:id`                | Bearer token | Delete a doctor         |
+| GET    | `/api/doctors/:doctorId/patients` | Bearer token | Patients for one doctor |
 
-- The frontend stays a display layer: KPI cards and charts receive already-shaped data.
-- The browser never downloads the full doctor or patient collections.
-- Counts, top doctors, condition totals, and 30-day trends stay consistent with the database, including doctors with zero patients.
-- Missing days in the 30-day series are filled with `0` in the API so line charts stay continuous without extra frontend math.
+### Patients
 
-**Trade-off**
+| Method | Endpoint            | Auth         | Description      |
+| ------ | ------------------- | ------------ | ---------------- |
+| POST   | `/api/patients`     | Bearer token | Create a patient |
+| GET    | `/api/patients`     | Bearer token | List patients    |
+| GET    | `/api/patients/:id` | Bearer token | Get a patient    |
+| PUT    | `/api/patients/:id` | Bearer token | Update a patient |
+| DELETE | `/api/patients/:id` | Bearer token | Delete a patient |
 
-Aggregation queries are more complex than `find()`. In return, payload size stays small and the UI does not re-implement analytics. Embedding every patient inside a doctor document would make those aggregations and the global patient search harder, which is why patients store a `doctorId` reference instead.
+### Dashboard
 
-## Visual Evidence
+| Method | Endpoint                 | Auth         | Description                       |
+| ------ | ------------------------ | ------------ | --------------------------------- |
+| GET    | `/api/dashboard/summary` | Bearer token | KPI counts and chart aggregations |
 
-Desktop uses a fixed sidebar, data tables, and a two-column chart grid. Below the `lg` breakpoint the sidebar becomes a drawer, tables become cards, and charts stack in a single column.
+### Health
+
+| Method | Endpoint      | Auth | Description  |
+| ------ | ------------- | ---- | ------------ |
+| GET    | `/api/health` | No   | Health check |
+
+## Available Scripts
+
+### Frontend
+
+| Script  | Command      | Description                  |
+| ------- | ------------ | ---------------------------- |
+| `dev`   | `next dev`   | Start the Next.js dev server |
+| `build` | `next build` | Production build             |
+| `start` | `next start` | Serve the production build   |
+| `lint`  | `eslint`     | Run ESLint                   |
+
+### Backend
+
+| Script       | Command                         | Description                      |
+| ------------ | ------------------------------- | -------------------------------- |
+| `dev`        | `node --watch src/server.js`    | Start the API with file watching |
+| `start`      | `node src/server.js`            | Start the API                    |
+| `seed:admin` | `node src/scripts/seedAdmin.js` | Create the first admin user      |
+
+## Deployment
+
+Intended split (this repository does not include live deployment URLs):
+
+| Part     | Target        |
+| -------- | ------------- |
+| Frontend | Vercel        |
+| Backend  | Render        |
+| Database | MongoDB Atlas |
+
+**Deployment configuration**
+
+- Frontend: set `NEXT_PUBLIC_API_URL` to the deployed API base (including `/api`)
+- Backend: set `PORT`, `MONGODB_URI`, `JWT_SECRET`, and `CLIENT_URL` to the frontend origin
+- Database: use a MongoDB Atlas connection string in `MONGODB_URI`
+
+## Development Progress
+
+| Phase   | Feature                | Status |
+| ------- | ---------------------- | ------ |
+| Phase 1 | Project Setup          | ✅     |
+| Phase 2 | MongoDB & Models       | ✅     |
+| Phase 3 | Authentication         | ✅     |
+| Phase 4 | Doctor API             | ✅     |
+| Phase 5 | Patient API            | ✅     |
+| Phase 6 | Frontend Auth & Layout | ✅     |
+| Phase 7 | Doctor Management UI   | ✅     |
+| Phase 8 | Patient Management UI  | ✅     |
+| Phase 9 | Dashboard & Analytics  | ✅     |
+
+## Screenshots
 
 ### Desktop
 
 **Login**
 
-![Desktop login](docs/screenshots/Desktop-Login.png)
+![Desktop login](docs/screenshots/Dekstop-Login.png)
 
-**Dashboard** — KPI cards and MongoDB-backed charts.
+**Dashboard** — KPI cards and MongoDB-backed charts
 
-![Desktop dashboard](docs/screenshots/Desktop-Dashboard.png)
+![Desktop dashboard](docs/screenshots/Dekstop-Dashboard.png)
 
-**Doctors** — search, filters, sort, pagination, and a table with view / edit / delete actions.
+**Doctors** — search, filters, sort, pagination, and table actions
 
-![Desktop doctors](docs/screenshots/Desktop-Doctors.png)
+![Desktop doctors](docs/screenshots/Dekstop-Doctors.png)
 
-**Patients** — search, filters, sort, pagination, and a table with view / edit / delete actions.
+**Patients** — search, filters, sort, pagination, and table actions
 
-![Desktop Patients](docs/screenshots/Desktop-patient.png)
+![Desktop patients](docs/screenshots/Dekstop-patient.png)
 
 ### Mobile
 
@@ -252,81 +416,12 @@ Desktop uses a fixed sidebar, data tables, and a two-column chart grid. Below th
 
 ![Mobile login](docs/screenshots/Mobile-Login.png)
 
-**Dashboard** — stacked stats and charts.
+**Dashboard** — stacked stats and charts
 
 ![Mobile dashboard](docs/screenshots/Mobile-Dashboard.png)
 
-**Doctors** — the same query controls, rendered as cards.
+**Doctors** — the same query controls, rendered as cards
 
-![Mobile doctors](docs/screenshots/mobile-Doctors.png)
+![Mobile doctors](docs/screenshots/Mobile-Doctors.png)
 
-## Tech Stack
-
-**Frontend:** Next.js, React, Tailwind CSS, `fetch()`, Recharts, React state + `localStorage`
-
-**Backend:** Node.js, Express, JWT, bcrypt
-
-**Database:** MongoDB, Mongoose
-
-## API Documentation
-
-All JSON error responses use:
-
-```json
-{
-  "success": false,
-  "message": "Human-readable error"
-}
-```
-
-### Health
-
-| Method | Path          | Auth | Description  |
-| ------ | ------------- | ---- | ------------ |
-| GET    | `/api/health` | No   | Health check |
-
-### Auth
-
-| Method | Path              | Auth         | Description                                |
-| ------ | ----------------- | ------------ | ------------------------------------------ |
-| POST   | `/api/auth/login` | No           | Login with email and password              |
-| GET    | `/api/auth/me`    | Bearer token | Returns the authenticated user id and role |
-
-Invalid credentials always return `401` with `"Invalid email or password."` so the API does not reveal whether an email exists.
-
-### Doctors
-
-All doctor endpoints require `Authorization: Bearer <token>`.
-
-| Method | Path               | Description                                   |
-| ------ | ------------------ | --------------------------------------------- |
-| POST   | `/api/doctors`     | Create a doctor                               |
-| GET    | `/api/doctors`     | List doctors (search, filter, sort, paginate) |
-| GET    | `/api/doctors/:id` | Get a single doctor                           |
-| PUT    | `/api/doctors/:id` | Update a doctor                               |
-| DELETE | `/api/doctors/:id` | Delete a doctor                               |
-
-List query parameters: `page`, `limit`, `search`, `specialization`, `hospital`, `fromDate`, `toDate`, `sortBy` (`createdAt` or `name`), `sortOrder` (`asc` or `desc`).
-
-Deleting a doctor does not delete that doctor's patients.
-
-### Patients
-
-All patient endpoints require `Authorization: Bearer <token>`.
-
-| Method | Path                              | Description                                    |
-| ------ | --------------------------------- | ---------------------------------------------- |
-| POST   | `/api/patients`                   | Create a patient under a doctor                |
-| GET    | `/api/patients`                   | List patients (search, filter, sort, paginate) |
-| GET    | `/api/patients/:id`               | Get a single patient                           |
-| PUT    | `/api/patients/:id`               | Update a patient                               |
-| DELETE | `/api/patients/:id`               | Delete a patient                               |
-| GET    | `/api/doctors/:doctorId/patients` | List patients for a specific doctor            |
-
-Create requires `doctorId`, `name`, `phone`, and `condition`. Optional fields: `email`, `age`, `gender`, `address`.
-
-### Dashboard
-
-| Method | Path                     | Auth         | Description                                    |
-| ------ | ------------------------ | ------------ | ---------------------------------------------- |
-| GET    | `/api/dashboard/summary` | Bearer token | KPI counts and chart aggregations from MongoDB |
+LIVE URL : https://doctor-tracker-weld.vercel.app
